@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#111111">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="洗車カンペ">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+  <title>洗車カンペ</title>
+  <style>
+    :root{
+      --bg:#f5f5f2;
+      --card:#ffffff;
+      --text:#111111;
+      --muted:#686868;
+      --line:#e8e8e2;
+      --soft:#f0f0eb;
+      --warn:#fff7d7;
+      --ok:#eef7ee;
+    }
+    *{box-sizing:border-box}
+    html{background:var(--bg)}
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue","Hiragino Sans","Yu Gothic",sans-serif;
+    }
+    main{max-width:760px;margin:auto;padding:calc(18px + env(safe-area-inset-top)) 14px calc(42px + env(safe-area-inset-bottom))}
+    h1{font-size:28px;line-height:1.15;margin:4px 0 8px}
+    h2{font-size:18px;margin:0 0 12px}
+    .lead{font-size:14px;line-height:1.65;color:var(--muted);margin:0 0 14px}
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:16px;
+      margin:12px 0;
+      box-shadow:0 3px 18px rgba(0,0,0,.035);
+    }
+    .warn{background:var(--warn)}
+    .ok{background:var(--ok)}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    label{display:block;font-size:12px;color:var(--muted);margin:0 0 7px}
+    select,input{
+      width:100%;
+      padding:12px 12px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      background:#fff;
+      color:#111;
+      font:inherit;
+      font-size:16px;
+    }
+    button{
+      width:100%;
+      border:0;
+      border-radius:14px;
+      padding:14px 16px;
+      background:#111;
+      color:#fff;
+      font-size:15px;
+      font-weight:700;
+      margin-top:14px;
+    }
+    .subtle-btn{
+      background:var(--soft);
+      color:#111;
+      border:1px solid var(--line);
+      margin-top:8px;
+    }
+    .step{border-top:1px solid var(--line);padding:15px 0}
+    .step:first-child{border-top:0;padding-top:0}
+    .step:last-child{padding-bottom:0}
+    .step h3{font-size:17px;margin:0 0 6px}
+    .mix{font-size:24px;font-weight:800;letter-spacing:-.02em;margin:6px 0}
+    .small{font-size:12px;color:var(--muted);line-height:1.65}
+    .pill{
+      display:inline-block;
+      padding:5px 9px;
+      border-radius:999px;
+      background:var(--soft);
+      font-size:12px;
+      margin:2px 5px 2px 0;
+    }
+    .hero-meta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+    .kpi{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:8px;
+      margin-top:10px;
+    }
+    .kpi > div{background:var(--soft);border-radius:12px;padding:10px}
+    .kpi b{display:block;font-size:16px}
+    .section-title{font-size:13px;color:var(--muted);font-weight:700;margin:0 0 8px}
+    .offline{display:none;font-size:12px;padding:8px 10px;border-radius:10px;background:#222;color:#fff;margin-bottom:10px}
+    .install{display:none}
+    footer{font-size:11px;color:#777;line-height:1.6;padding:8px 2px}
+    .divider{height:1px;background:var(--line);margin:14px 0}
+    @media(max-width:560px){
+      .row,.kpi{grid-template-columns:1fr}
+      h1{font-size:26px}
+    }
+  </style>
+</head>
+<body>
+<main>
+  <div id="offlineBanner" class="offline">オフライン表示中。保存済みの洗車カンペはそのまま使えます。</div>
+
+  <h1>洗車カンペ</h1>
+  <p class="lead">洗車場で汚れ具合と使うケミカルを選ぶだけ。希釈率、原液ml、工程順をその場で表示します。履歴は保存せず、設定だけ端末内に記憶します。</p>
+
+  <div class="hero-meta">
+    <span class="pill">iK FOAM Pro 2</span>
+    <span class="pill">Labocosmetica</span>
+    <span class="pill">Koch-Chemie</span>
+    <span class="pill">オフライン対応</span>
+  </div>
+
+  <div class="card">
+    <h2>今日の状態</h2>
+
+    <div class="row">
+      <div>
+        <label>洗剤システム</label>
+        <select id="brand">
+          <option value="lab">Labocosmetica</option>
+          <option value="koch">Koch-Chemie</option>
+          <option value="hybrid">混在（Labocosmetica洗浄 + Koch仕上げ）</option>
+        </select>
+      </div>
+      <div>
+        <label>汚れ具合</label>
+        <select id="dirt">
+          <option value="light">軽度｜1〜2週間・雨少なめ</option>
+          <option value="normal" selected>通常｜2〜4週間・雨あり</option>
+          <option value="heavy">重度｜1か月超・雨ざらし</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:10px">
+      <div>
+        <label>ウォータースポット</label>
+        <select id="mineral">
+          <option value="none">ほぼ無し</option>
+          <option value="light" selected>軽度あり</option>
+          <option value="mid">中程度あり</option>
+        </select>
+      </div>
+      <div>
+        <label>iKで作る量</label>
+        <select id="ikvol">
+          <option value="500">500 ml</option>
+          <option value="750">750 ml</option>
+          <option value="1000">1000 ml</option>
+          <option value="1250" selected>1250 ml（FOAM Pro 2実用上限）</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:10px">
+      <div>
+        <label>洗車バケツ水量</label>
+        <select id="bucket">
+          <option value="8">8 L</option>
+          <option value="10" selected>10 L</option>
+          <option value="12">12 L</option>
+          <option value="15">15 L</option>
+        </select>
+      </div>
+      <div>
+        <label>ホイール汚れ</label>
+        <select id="wheel">
+          <option value="light">軽度</option>
+          <option value="normal" selected>通常</option>
+          <option value="heavy">重度 / タイヤもリセット</option>
+        </select>
+      </div>
+    </div>
+
+    <button onclick="buildPlan()">今日の洗車メニューを作成</button>
+  </div>
+
+  <div id="summary" class="card ok"></div>
+  <div id="result" class="card"></div>
+
+  <div class="card">
+    <h2>ホイール / タイヤ</h2>
+    <div id="wheelResult"></div>
+  </div>
+
+  <div class="card warn">
+    <h2>iK FOAM Pro 2 メモ</h2>
+    <p class="small">FOAM Pro 2は総容量1.9L、実用容量1.25L。加圧用の空気室を残す必要があるため、このカンペでは薬液上限を1250mlに固定しています。</p>
+  </div>
+
+  <div id="installCard" class="card install">
+    <h2>ホーム画面に追加</h2>
+    <p class="small">PWAとしてインストールできます。洗車場で電波が弱くても、一度読み込んだ後はオフラインで使用可能です。</p>
+    <button id="installBtn">インストール</button>
+  </div>
+
+  <div class="card">
+    <h2>運用ルール</h2>
+    <p class="small">基本は薄い濃度から。炎天下・熱いパネルでは使わず、薬剤を乾かさない。酸性・アルカリ性の工程は素材とコーティングの状態を見て調整し、頑固なミネラルは全面を必要以上に強くするよりスポット処理へ切り替える。</p>
+  </div>
+
+  <footer>
+    希釈表記は「原液1：水X」で計算しています。例 1:50 = 原液1 + 水50。
+  </footer>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+
+function mix(total, ratio){
+  const chem = total / (ratio + 1);
+  return { chem: Math.round(chem), water: Math.round(total - chem) };
+}
+function mlText(v){ return `${Math.round(v)} ml`; }
+
+function fmtMix(name, ratio, total, note=''){
+  const m = mix(total, ratio);
+  return `
+    <div class="step">
+      <h3>${name}</h3>
+      <div class="mix">${m.chem} ml <span class="small">原液</span> + ${m.water} ml <span class="small">水</span></div>
+      <div><span class="pill">1:${ratio}</span><span class="pill">計 ${total}ml</span></div>
+      ${note ? `<p class="small">${note}</p>` : ''}
+    </div>`;
+}
+function bucketMix(name, ratio, liters, note=''){
+  const total = liters * 1000;
+  const m = mix(total, ratio);
+  return `
+    <div class="step">
+      <h3>${name}</h3>
+      <div class="mix">${m.chem} ml <span class="small">原液</span> / 水 約${liters}L</div>
+      <div><span class="pill">1:${ratio}</span></div>
+      ${note ? `<p class="small">${note}</p>` : ''}
+    </div>`;
+}
+function saveSettings(){
+  const keys=['brand','dirt','mineral','ikvol','bucket','wheel'];
+  const data={};
+  keys.forEach(k => data[k]=$(k).value);
+  localStorage.setItem('wash-cheatsheet-settings', JSON.stringify(data));
+}
+function restoreSettings(){
+  try{
+    const data=JSON.parse(localStorage.getItem('wash-cheatsheet-settings')||'{}');
+    Object.entries(data).forEach(([k,v]) => { if($(k)) $(k).value=v; });
+  }catch(e){}
+}
+function buildPlan(){
+  saveSettings();
+
+  const brand=$('brand').value;
+  const dirt=$('dirt').value;
+  const mineral=$('mineral').value;
+  const total=+$('ikvol').value;
+  const bucket=+$('bucket').value;
+  const wheel=$('wheel').value;
+
+  const dirtLabel = dirt==='light'?'軽度':dirt==='normal'?'通常':'重度';
+  const mineralLabel = mineral==='none'?'水ジミほぼ無し':mineral==='light'?'軽度水ジミあり':'中程度水ジミあり';
+
+  $('summary').innerHTML = `
+    <div class="section-title">今日の判定</div>
+    <div class="kpi">
+      <div><span class="small">汚れ</span><b>${dirtLabel}</b></div>
+      <div><span class="small">ミネラル</span><b>${mineralLabel}</b></div>
+      <div><span class="small">iK作成量</span><b>${total} ml</b></div>
+    </div>`;
+
+  let html='';
+
+  if(brand==='lab' || brand==='hybrid'){
+    const primusRatio = dirt==='light' ? 100 : dirt==='normal' ? 80 : 50;
+    html += `<div class="section-title">Labocosmetica洗浄</div>`;
+    html += fmtMix(
+      'STEP 1｜PRÌMUS 2.0',
+      primusRatio,
+      total,
+      'アルカリ前洗浄。下から上へ吹き、乾かさず作用させて高圧ですすぐ。'
+    );
+
+    const needsPurifica = mineral!=='none' || dirt==='heavy';
+    if(needsPurifica){
+      const purificaRatio = mineral==='mid' ? 30 : 60;
+      html += fmtMix(
+        'STEP 2｜PURÌFICA',
+        purificaRatio,
+        total,
+        mineral==='mid'
+          ? '中程度のミネラルが目立つ日。強め設定なので、目立たない場所で状態確認してから全面へ。'
+          : '軽度ミネラル・青空駐車の定期メンテ向け。'
+      );
+      html += bucketMix(
+        'STEP 3｜SÈMPER',
+        1000,
+        bucket,
+        'ミットで接触洗浄 → 十分にすすぐ。'
+      );
+    }else{
+      html += bucketMix(
+        'STEP 2｜SÈMPER',
+        1000,
+        bucket,
+        'PURÌFICAは省略。ミットで接触洗浄 → 十分にすすぐ。'
+      );
+    }
+
+    if(mineral==='mid'){
+      html += `
+        <div class="step">
+          <h3>残った水ジミ</h3>
+          <p class="small">PURÌFICAで残る場合はSIDERO等の除染剤へ。それでも残る固着スケールだけ専用除去剤に段階アップ。</p>
+        </div>`;
+    }
+
+    if(brand==='hybrid'){
+      html += `
+        <div class="step">
+          <h3>STEP ${needsPurifica?4:3}｜Koch Fseで仕上げ</h3>
+          <p class="small">残っているFseを使い切る期間は、拭き上げ兼仕上げにそのまま使用。</p>
+        </div>`;
+    }
+  }
+
+  if(brand==='koch'){
+    html += `<div class="section-title">Koch-Chemie洗浄</div>`;
+    const gsf = Math.round(total * 20 / 1000);
+    const gs = dirt==='light' ? 10 : dirt==='normal' ? 20 : 30;
+    const water = Math.max(total - gsf - gs, 0);
+
+    html += `
+      <div class="step">
+        <h3>STEP 1｜Gsf + Gs</h3>
+        <div class="mix">Gsf ${gsf} ml + Gs ${gs} ml</div>
+        <div><span class="pill">iK ${total}ml</span><span class="pill">水 約${water}ml</span></div>
+        <p class="small">Gentle Snow Foamを20ml/L基準で作り、汚れに合わせてGreen Starを10〜30ml追加。乾かさず作用させてすすぐ。</p>
+      </div>`;
+
+    html += bucketMix(
+      'STEP 2｜Rse',
+      200,
+      bucket,
+      '酸性コンタクトウォッシュ → 十分にすすぐ。'
+    );
+
+    html += `
+      <div class="step">
+        <h3>STEP 3｜Fse</h3>
+        <p class="small">希釈せず、必要量をパネルまたはクロスへ。拭き上げながら仕上げ。</p>
+      </div>`;
+  }
+
+  $('result').innerHTML = html;
+
+  let wr='';
+  if(brand==='lab' || brand==='hybrid'){
+    const ratio = wheel==='light' ? 10 : wheel==='normal' ? 5 : 3;
+    const amount=500;
+    const m=mix(amount,ratio);
+    wr += `
+      <div class="step">
+        <h3>MANIAC Wheel & Tyre Cleaner</h3>
+        <div class="mix">${m.chem} ml + ${m.water} ml</div>
+        <span class="pill">1:${ratio}</span><span class="pill">500ml作成</span>
+        <p class="small">軽度 1:10 / 通常 1:5 / 強い汚れ・古いタイヤドレッシング除去 1:3 の目安。</p>
+      </div>
+      <div class="step">
+        <h3>鉄粉が多い日</h3>
+        <p class="small">SIDEROを追加。毎回ではなく、ブレーキダスト・ザラつきが目立つ日の定期除染枠。</p>
+      </div>`;
+  }else{
+    const ratio = wheel==='light' ? 20 : wheel==='normal' ? 10 : 5;
+    const amount=500;
+    const m=mix(amount,ratio);
+    wr += `
+      <div class="step">
+        <h3>Green Star</h3>
+        <div class="mix">${m.chem} ml + ${m.water} ml</div>
+        <span class="pill">1:${ratio}</span><span class="pill">500ml作成</span>
+        <p class="small">薄めから使う。ホイール表面仕上げやコーティングとの相性を優先。</p>
+      </div>`;
+  }
+  $('wheelResult').innerHTML = wr;
+}
+
+restoreSettings();
+buildPlan();
+
+['brand','dirt','mineral','ikvol','bucket','wheel'].forEach(id=>{
+  $(id).addEventListener('change', buildPlan);
+});
+
+function updateOnlineState(){
+  $('offlineBanner').style.display = navigator.onLine ? 'none' : 'block';
+}
+window.addEventListener('online', updateOnlineState);
+window.addEventListener('offline', updateOnlineState);
+updateOnlineState();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js'));
+}
+
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e)=>{
+  e.preventDefault();
+  deferredPrompt=e;
+  $('installCard').style.display='block';
+});
+$('installBtn').addEventListener('click', async()=>{
+  if(!deferredPrompt) return;
+  deferredPrompt.prompt();
+  await deferredPrompt.userChoice;
+  deferredPrompt=null;
+  $('installCard').style.display='none';
+});
+</script>
+</body>
+</html>
