@@ -164,7 +164,7 @@
     </div>
 
     <div class="row" style="margin-top:10px">
-      <div>
+      <div id="bucketOptions">
         <label>洗車バケツ水量</label>
         <select id="bucket">
           <option value="8">8 L</option>
@@ -187,7 +187,7 @@
       <label for="kochPattern">Koch-Chemieの洗車パターン</label>
       <select id="kochPattern">
         <option value="standard">Gsf + Gsフォーム → Rseバケツ（従来）</option>
-        <option value="rseFoam">Gsフォーム → Rseフォーム → Gsfバケツ</option>
+        <option value="rseFoam">Gs + Gsfフォーム → すすぎ → Rseフォームでコンタクトウォッシュ</option>
       </select>
       <div id="rseFoamOptions" hidden style="margin-top:10px">
         <label for="rseFoamRatio">RseのiK用希釈率｜原液1：水N</label>
@@ -277,6 +277,7 @@ function buildPlan(){
   $('rseFoamRatio').value=String(rseFoamRatio);
   $('kochOptions').hidden=$('brand').value!=='koch';
   $('rseFoamOptions').hidden=$('kochPattern').value!=='rseFoam';
+  $('bucketOptions').hidden=$('brand').value==='koch' && $('kochPattern').value==='rseFoam';
   saveSettings();
 
   const brand=$('brand').value;
@@ -355,35 +356,36 @@ function buildPlan(){
   if(brand==='koch'){
     html += `<div class="section-title">Koch-Chemie洗浄</div>`;
     if($('kochPattern').value==='rseFoam'){
+      const gsf = Math.round(total * 20 / 1000);
       const gsRatio = dirt==='light' ? 30 : dirt==='normal' ? 20 : 5;
-      html += fmtMix(
-        'STEP 1｜GsをiKで吹き付け',
-        gsRatio,
-        total,
-        'Green Star単独の前洗浄。Gsfは後のバケツ洗浄で使用。乾かさず作用させる。'
-      );
+      const gs = mix(total - gsf, gsRatio).chem;
+      const water = Math.max(total - gsf - gs, 0);
+      html += `
+        <div class="step">
+          <h3>STEP 1｜Gs + GsfをiKでフォーム塗布</h3>
+          <div class="mix">Gs ${gs} ml + Gsf ${gsf} ml</div>
+          <div><span class="pill">iK ${total}ml</span><span class="pill">Gs 1:${gsRatio}</span><span class="pill">水 約${water}ml</span></div>
+          <p class="small">泡立ち用のGentle Snow Foamを20ml/Lで加える。残りの容量をGreen Star原液1：水Nで配合し、乾かさず作用させる。</p>
+        </div>`;
       html += `
         <div class="step">
           <h3>STEP 2｜水で洗い流す</h3>
-          <p class="small">高圧水でGsと浮いた汚れを十分にすすぐ。同じiKを使う場合は、残液を出して容器・ノズルを水ですすいでからRseを作る。</p>
+          <p class="small">高圧水でGs・Gsfと浮いた汚れを十分にすすぐ。同じiKを使う場合は、残液を出して容器・ノズルを水ですすいでからRseを作る。</p>
         </div>`;
       html += fmtMix(
         'STEP 3｜RseをiKでフォーム塗布',
         rseFoamRatio,
         total,
-        '濡れた車体へ吹き付け、乾かさず次のコンタクトウォッシュへ。iKで作る量はGsとは別に、1回分ずつ配合する。'
+        '濡れた車体へ吹き付け、乾かさず次のコンタクトウォッシュへ。iKで作る量はGs + Gsfとは別に、1回分ずつ配合する。'
       );
-      const bucketGsf = Math.round(bucket * 5);
       html += `
         <div class="step">
-          <h3>STEP 4｜Gsfバケツでコンタクトウォッシュ</h3>
-          <div class="mix">Gsf ${bucketGsf} ml + 水 ${bucket}L</div>
-          <div><span class="pill">1:200</span><span class="pill">水10LにGsf 50ml</span></div>
-          <p class="small">Gentle Snow Foamを水量に合わせて配合し、ミットでパネルごとに洗う。</p>
+          <h3>STEP 4｜Rseの泡でコンタクトウォッシュ</h3>
+          <p class="small">吹き付けたRseの泡を使い、ミットでパネルごとに洗う。泡を乾かさず、必要に応じてRseを追加で吹き付ける。</p>
         </div>
         <div class="step">
           <h3>STEP 5｜十分にすすぐ</h3>
-          <p class="small">RseとGsfを水でしっかり洗い流す。</p>
+          <p class="small">Rseを水でしっかり洗い流す。</p>
         </div>
         <div class="step">
           <h3>STEP 6｜Fseで拭き上げ・仕上げ</h3>
