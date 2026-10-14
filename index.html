@@ -312,6 +312,7 @@ function buildPlan(){
 
   if(brand==='lab' || brand==='hybrid'){
     const primusRatio = dirt==='light' ? 100 : dirt==='normal' ? 80 : 50;
+    const semperRatio = dirt==='light' ? 1200 : dirt==='normal' ? 1000 : 800;
     html += `<div class="section-title">Labocosmetica洗浄</div>`;
     html += fmtMix(
       'STEP 1｜PRÌMUS 2.0',
@@ -322,25 +323,27 @@ function buildPlan(){
 
     const needsPurifica = mineral!=='none' || dirt==='heavy';
     if(needsPurifica){
-      const purificaRatio = strongMineral ? 30 : 60;
+      const purificaRatio = mineral==='heavy' ? 10 : mineral==='mid' ? 30 : 60;
       html += fmtMix(
         'STEP 2｜PURÌFICA',
         purificaRatio,
         total,
-        strongMineral
-          ? '中程度のミネラルが目立つ日。強め設定なので、目立たない場所で状態確認してから全面へ。'
-          : '軽度ミネラル・青空駐車の定期メンテ向け。'
+        (mineral==='heavy'
+          ? '重度のミネラル向け。公式豪州代理店のポンプスプレー用設定。'
+          : mineral==='mid'
+            ? '中程度のミネラル向け。'
+            : '軽度ミネラル・定期メンテ向け。') + ' 汚れ別の希釈設定です。メーカーの通常3pH洗車のスプレー推奨は1:200、固着ミネラルの直接処理は1:30。乾かさず、十分にすすぐ。'
       );
       html += bucketMix(
         'STEP 3｜SÈMPER',
-        1000,
+        semperRatio,
         bucket,
         'ミットで接触洗浄 → 十分にすすぐ。'
       );
     }else{
       html += bucketMix(
         'STEP 2｜SÈMPER',
-        1000,
+        semperRatio,
         bucket,
         'PURÌFICAは省略。ミットで接触洗浄 → 十分にすすぐ。'
       );
