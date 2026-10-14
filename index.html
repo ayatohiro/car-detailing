@@ -336,15 +336,16 @@ function buildPlan(){
   if(brand==='koch'){
     html += `<div class="section-title">Koch-Chemie洗浄</div>`;
     const gsf = Math.round(total * 20 / 1000);
-    const gs = dirt==='light' ? 10 : dirt==='normal' ? 20 : 30;
+    const gsRatio = dirt==='light' ? 30 : dirt==='normal' ? 20 : 5;
+    const gs = mix(total - gsf, gsRatio).chem;
     const water = Math.max(total - gsf - gs, 0);
 
     html += `
       <div class="step">
         <h3>STEP 1｜Gsf + Gs</h3>
         <div class="mix">Gsf ${gsf} ml + Gs ${gs} ml</div>
-        <div><span class="pill">iK ${total}ml</span><span class="pill">水 約${water}ml</span></div>
-        <p class="small">Gentle Snow Foamを20ml/L基準で作り、汚れに合わせてGreen Starを10〜30ml追加。乾かさず作用させてすすぐ。</p>
+        <div><span class="pill">iK ${total}ml</span><span class="pill">Gs 1:${gsRatio}</span><span class="pill">水 約${water}ml</span></div>
+        <p class="small">Gentle Snow Foamは20ml/L。残りの容量をGreen Star原液1：水Nで配合（軽度1:30／中程度1:20／重度1:5）。乾かさず作用させてすすぐ。</p>
       </div>`;
 
     html += bucketMix(
@@ -380,7 +381,7 @@ function buildPlan(){
         <p class="small">SIDEROを追加。毎回ではなく、ブレーキダスト・ザラつきが目立つ日の定期除染枠。</p>
       </div>`;
   }else{
-    const ratio = wheel==='light' ? 20 : wheel==='normal' ? 10 : 5;
+    const ratio = wheel==='light' ? 30 : wheel==='normal' ? 20 : 5;
     const amount=500;
     const m=mix(amount,ratio);
     wr += `

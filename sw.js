@@ -1,4 +1,4 @@
-const CACHE_NAME = 'wash-cheatsheet-v1';
+const CACHE_NAME = 'wash-cheatsheet-v2';
 const ASSETS = [
   './',
   './index.html',
