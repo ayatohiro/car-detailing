@@ -183,6 +183,19 @@
       </div>
     </div>
 
+    <div id="kochOptions" hidden style="margin-top:10px">
+      <label for="kochPattern">Koch-Chemieの洗車パターン</label>
+      <select id="kochPattern">
+        <option value="standard">Gsf + Gsフォーム → Rseバケツ（従来）</option>
+        <option value="rseFoam">Gsフォーム → Rseフォーム → Gsfバケツ</option>
+      </select>
+      <div id="rseFoamOptions" hidden style="margin-top:10px">
+        <label for="rseFoamRatio">RseのiK用希釈率｜原液1：水N</label>
+        <input id="rseFoamRatio" type="number" min="1" max="1000" step="1" value="200" inputmode="numeric">
+        <p class="small">初期値は基本希釈の1:200。iK専用の公式指定値ではありません。機器に合わせて調整してください。<a href="https://www.avankasei.co.jp/koch-chemie/production/reactivation-shampoo-extra/" target="_blank" rel="noopener">Rseの使用方法</a></p>
+      </div>
+    </div>
+
     <button onclick="buildPlan()">今日の洗車メニューを作成</button>
   </div>
 
@@ -246,7 +259,7 @@ function bucketMix(name, ratio, liters, note=''){
     </div>`;
 }
 function saveSettings(){
-  const keys=['brand','dirt','mineral','ikvol','bucket','wheel'];
+  const keys=['brand','dirt','mineral','ikvol','bucket','wheel','kochPattern','rseFoamRatio'];
   const data={};
   keys.forEach(k => data[k]=$(k).value);
   localStorage.setItem('wash-cheatsheet-settings', JSON.stringify(data));
@@ -258,6 +271,12 @@ function restoreSettings(){
   }catch(e){}
 }
 function buildPlan(){
+  if(!['standard','rseFoam'].includes($('kochPattern').value)) $('kochPattern').value='standard';
+  const enteredRatio=Number($('rseFoamRatio').value);
+  const rseFoamRatio=Number.isInteger(enteredRatio) && enteredRatio>=1 && enteredRatio<=1000 ? enteredRatio : 200;
+  $('rseFoamRatio').value=String(rseFoamRatio);
+  $('kochOptions').hidden=$('brand').value!=='koch';
+  $('rseFoamOptions').hidden=$('kochPattern').value!=='rseFoam';
   saveSettings();
 
   const brand=$('brand').value;
@@ -335,6 +354,42 @@ function buildPlan(){
 
   if(brand==='koch'){
     html += `<div class="section-title">Koch-Chemie洗浄</div>`;
+    if($('kochPattern').value==='rseFoam'){
+      const gsRatio = dirt==='light' ? 30 : dirt==='normal' ? 20 : 5;
+      html += fmtMix(
+        'STEP 1｜GsをiKで吹き付け',
+        gsRatio,
+        total,
+        'Green Star単独の前洗浄。Gsfは後のバケツ洗浄で使用。乾かさず作用させる。'
+      );
+      html += `
+        <div class="step">
+          <h3>STEP 2｜水で洗い流す</h3>
+          <p class="small">高圧水でGsと浮いた汚れを十分にすすぐ。同じiKを使う場合は、残液を出して容器・ノズルを水ですすいでからRseを作る。</p>
+        </div>`;
+      html += fmtMix(
+        'STEP 3｜RseをiKでフォーム塗布',
+        rseFoamRatio,
+        total,
+        '濡れた車体へ吹き付け、乾かさず次のコンタクトウォッシュへ。iKで作る量はGsとは別に、1回分ずつ配合する。'
+      );
+      const bucketGsf = Math.round(bucket * 5);
+      html += `
+        <div class="step">
+          <h3>STEP 4｜Gsfバケツでコンタクトウォッシュ</h3>
+          <div class="mix">Gsf ${bucketGsf} ml + 水 ${bucket}L</div>
+          <div><span class="pill">1:200</span><span class="pill">水10LにGsf 50ml</span></div>
+          <p class="small">Gentle Snow Foamを水量に合わせて配合し、ミットでパネルごとに洗う。</p>
+        </div>
+        <div class="step">
+          <h3>STEP 5｜十分にすすぐ</h3>
+          <p class="small">RseとGsfを水でしっかり洗い流す。</p>
+        </div>
+        <div class="step">
+          <h3>STEP 6｜Fseで拭き上げ・仕上げ</h3>
+          <p class="small">希釈せず、必要量をパネルまたはクロスへ。拭き上げながら仕上げ。</p>
+        </div>`;
+    }else{
     const gsf = Math.round(total * 20 / 1000);
     const gsRatio = dirt==='light' ? 30 : dirt==='normal' ? 20 : 5;
     const gs = mix(total - gsf, gsRatio).chem;
@@ -360,6 +415,7 @@ function buildPlan(){
         <h3>STEP 3｜Fse</h3>
         <p class="small">希釈せず、必要量をパネルまたはクロスへ。拭き上げながら仕上げ。</p>
       </div>`;
+    }
   }
 
   $('result').innerHTML = html;
@@ -398,7 +454,7 @@ function buildPlan(){
 restoreSettings();
 buildPlan();
 
-['brand','dirt','mineral','ikvol','bucket','wheel'].forEach(id=>{
+['brand','dirt','mineral','ikvol','bucket','wheel','kochPattern','rseFoamRatio'].forEach(id=>{
   $(id).addEventListener('change', buildPlan);
 });
 
