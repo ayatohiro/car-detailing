@@ -150,6 +150,7 @@
           <option value="none">ほぼ無し</option>
           <option value="light" selected>軽度あり</option>
           <option value="mid">中程度あり</option>
+          <option value="heavy">重度あり</option>
         </select>
       </div>
       <div>
@@ -190,9 +191,14 @@
         <option value="rseFoam">Gs + Gsfフォーム → すすぎ → Rseフォームでコンタクトウォッシュ</option>
       </select>
       <div id="rseFoamOptions" hidden style="margin-top:10px">
+        <label for="rseRatioMode">Rseの希釈設定</label>
+        <select id="rseRatioMode">
+          <option value="auto">ウォータースポットに合わせる</option>
+          <option value="manual">希釈率を手動指定</option>
+        </select>
         <label for="rseFoamRatio">RseのiK用希釈率｜原液1：水N</label>
         <input id="rseFoamRatio" type="number" min="1" max="1000" step="1" value="200" inputmode="numeric">
-        <p class="small">初期値は基本希釈の1:200。iK専用の公式指定値ではありません。機器に合わせて調整してください。<a href="https://www.avankasei.co.jp/koch-chemie/production/reactivation-shampoo-extra/" target="_blank" rel="noopener">Rseの使用方法</a></p>
+        <p class="small">ほぼ無し・軽度1:200／中程度1:150／重度1:100。公式の基本希釈は1:200で、段階設定はこのアプリの指定値です。<a href="https://www.avankasei.co.jp/koch-chemie/production/reactivation-shampoo-extra/" target="_blank" rel="noopener">Rseの使用方法</a></p>
       </div>
     </div>
 
@@ -259,7 +265,7 @@ function bucketMix(name, ratio, liters, note=''){
     </div>`;
 }
 function saveSettings(){
-  const keys=['brand','dirt','mineral','ikvol','bucket','wheel','kochPattern','rseFoamRatio'];
+  const keys=['brand','dirt','mineral','ikvol','bucket','wheel','kochPattern','rseFoamRatio','rseRatioMode'];
   const data={};
   keys.forEach(k => data[k]=$(k).value);
   localStorage.setItem('wash-cheatsheet-settings', JSON.stringify(data));
@@ -272,9 +278,12 @@ function restoreSettings(){
 }
 function buildPlan(){
   if(!['standard','rseFoam'].includes($('kochPattern').value)) $('kochPattern').value='standard';
+  if(!['auto','manual'].includes($('rseRatioMode').value)) $('rseRatioMode').value='auto';
+  const rseAutomaticRatio=$('mineral').value==='heavy' ? 100 : $('mineral').value==='mid' ? 150 : 200;
   const enteredRatio=Number($('rseFoamRatio').value);
-  const rseFoamRatio=Number.isInteger(enteredRatio) && enteredRatio>=1 && enteredRatio<=1000 ? enteredRatio : 200;
+  const rseFoamRatio=$('rseRatioMode').value==='auto' ? rseAutomaticRatio : Number.isInteger(enteredRatio) && enteredRatio>=1 && enteredRatio<=1000 ? enteredRatio : 200;
   $('rseFoamRatio').value=String(rseFoamRatio);
+  $('rseFoamRatio').disabled=$('rseRatioMode').value==='auto';
   $('kochOptions').hidden=$('brand').value!=='koch';
   $('rseFoamOptions').hidden=$('kochPattern').value!=='rseFoam';
   $('bucketOptions').hidden=$('brand').value==='koch' && $('kochPattern').value==='rseFoam';
@@ -288,7 +297,8 @@ function buildPlan(){
   const wheel=$('wheel').value;
 
   const dirtLabel = dirt==='light'?'軽度':dirt==='normal'?'通常':'重度';
-  const mineralLabel = mineral==='none'?'水ジミほぼ無し':mineral==='light'?'軽度水ジミあり':'中程度水ジミあり';
+  const mineralLabel = mineral==='none'?'水ジミほぼ無し':mineral==='light'?'軽度水ジミあり':mineral==='heavy'?'重度水ジミあり':'中程度水ジミあり';
+  const strongMineral = mineral==='mid' || mineral==='heavy';
 
   $('summary').innerHTML = `
     <div class="section-title">今日の判定</div>
@@ -312,12 +322,12 @@ function buildPlan(){
 
     const needsPurifica = mineral!=='none' || dirt==='heavy';
     if(needsPurifica){
-      const purificaRatio = mineral==='mid' ? 30 : 60;
+      const purificaRatio = strongMineral ? 30 : 60;
       html += fmtMix(
         'STEP 2｜PURÌFICA',
         purificaRatio,
         total,
-        mineral==='mid'
+        strongMineral
           ? '中程度のミネラルが目立つ日。強め設定なので、目立たない場所で状態確認してから全面へ。'
           : '軽度ミネラル・青空駐車の定期メンテ向け。'
       );
@@ -336,7 +346,7 @@ function buildPlan(){
       );
     }
 
-    if(mineral==='mid'){
+    if(strongMineral){
       html += `
         <div class="step">
           <h3>残った水ジミ</h3>
@@ -456,7 +466,7 @@ function buildPlan(){
 restoreSettings();
 buildPlan();
 
-['brand','dirt','mineral','ikvol','bucket','wheel','kochPattern','rseFoamRatio'].forEach(id=>{
+['brand','dirt','mineral','ikvol','bucket','wheel','kochPattern','rseFoamRatio','rseRatioMode'].forEach(id=>{
   $(id).addEventListener('change', buildPlan);
 });
 
